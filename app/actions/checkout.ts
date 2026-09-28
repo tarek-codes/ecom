@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { STORE_CONFIG } from "@/lib/constants/config";
 import { generateOrderNumber } from "@/lib/utils/format";
 import { OrderStatus } from "@prisma/client";
+import { revalidatePath, updateTag } from "next/cache";
 
 export interface CheckoutItemInput {
   productId: string;
@@ -193,6 +194,11 @@ export async function createOrder(data: CheckoutFormInput): Promise<CheckoutResu
 
       return newOrder;
     });
+
+    // Invalidate product cache so updated stock reflects immediately across store
+    updateTag("products");
+    revalidatePath("/shop");
+    revalidatePath("/");
 
     return {
       success: true,

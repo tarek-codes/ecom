@@ -3,7 +3,8 @@
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { slugify } from "@/lib/utils/format";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/db/queries";
 
 export interface CategoryFormData {
   name: string;
@@ -37,6 +38,8 @@ export async function createCategoryAction(data: CategoryFormData) {
       },
     });
 
+    updateTag(CACHE_TAGS.categories);
+    updateTag(CACHE_TAGS.products);
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/categories");
@@ -70,6 +73,8 @@ export async function updateCategoryAction(id: string, data: CategoryFormData) {
       },
     });
 
+    updateTag(CACHE_TAGS.categories);
+    updateTag(CACHE_TAGS.products);
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/categories");
@@ -90,6 +95,8 @@ export async function toggleCategoryActiveAction(id: string, isActive: boolean) 
       data: { isActive },
     });
 
+    updateTag(CACHE_TAGS.categories);
+    updateTag(CACHE_TAGS.products);
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/categories");
@@ -120,6 +127,8 @@ export async function deleteCategoryAction(id: string) {
       where: { id },
     });
 
+    updateTag(CACHE_TAGS.categories);
+    updateTag(CACHE_TAGS.products);
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/categories");

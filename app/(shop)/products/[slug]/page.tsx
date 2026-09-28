@@ -1,10 +1,14 @@
 import React from "react";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/db/prisma";
-import { ProductDetails, FullProduct } from "@/components/shop/ProductDetails";
+import { ProductDetails } from "@/components/shop/ProductDetails";
 import { ProductGrid } from "@/components/shop/ProductGrid";
-import { SerializedProduct } from "@/components/shop/ProductCard";
+import {
+  getCachedProductBySlug,
+  getCachedRelatedProducts,
+} from "@/lib/db/queries";
 import type { Metadata } from "next";
+
+export const revalidate = 300;
 
 interface ProductPageProps {
   params: Promise<{
@@ -12,13 +16,10 @@ interface ProductPageProps {
   }>;
 }
 
-// Generate dynamic SEO metadata
+// Generate dynamic SEO metadata using cached product lookup
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug, isActive: true },
-    select: { name: true, description: true, mainImage: true },
-  });
+  const product = await getCachedProductBySlug(slug);
 
   if (!product) {
     return {
@@ -40,64 +41,18 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
 
-  const dbProduct = await prisma.product.findUnique({
-    where: { slug, isActive: true },
-    include: {
-      category: {
-        select: { id: true, name: true, slug: true },
-      },
-      images: {
-        orderBy: { sortOrder: "asc" },
-      },
-    },
-  });
+  // Cached product retrieval
+  const fullProduct = await getCachedProductBySlug(slug);
 
-  if (!dbProduct) {
+  if (!fullProduct) {
     notFound();
   }
 
-  // Related products from the same category
-  const relatedDbProducts = await prisma.product.findMany({
-    where: {
-      categoryId: dbProduct.categoryId,
-      isActive: true,
-      NOT: { id: dbProduct.id },
-    },
-    take: 4,
-    include: {
-      category: {
-        select: { id: true, name: true, slug: true },
-      },
-    },
-  });
-
-  const fullProduct: FullProduct = {
-    id: dbProduct.id,
-    name: dbProduct.name,
-    slug: dbProduct.slug,
-    description: dbProduct.description,
-    price: Number(dbProduct.price),
-    stock: dbProduct.stock,
-    mainImage: dbProduct.mainImage,
-    category: dbProduct.category,
-    images: dbProduct.images.map((img) => ({
-      id: img.id,
-      imageUrl: img.imageUrl,
-      sortOrder: img.sortOrder,
-    })),
-  };
-
-  const relatedProducts: SerializedProduct[] = relatedDbProducts.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    price: Number(p.price),
-    stock: p.stock,
-    mainImage: p.mainImage,
-    isFeatured: p.isFeatured,
-    category: p.category,
-  }));
+  // Cached related products from the same category
+  const relatedProducts = await getCachedRelatedProducts(
+    fullProduct.category.id,
+    fullProduct.id
+  );
 
   return (
     <div className="space-y-16 pb-20">

@@ -1,65 +1,22 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Shield, Flower, Scissors } from "lucide-react";
-import { prisma } from "@/lib/db/prisma";
 import { Hero } from "@/components/shop/Hero";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { CategoryCard } from "@/components/shop/CategoryCard";
-import { SerializedProduct } from "@/components/shop/ProductCard";
+import {
+  getCachedFeaturedProducts,
+  getCachedActiveCategoriesWithCount,
+} from "@/lib/db/queries";
 
-export const revalidate = 60; // Revalidate every 60 seconds
+export const revalidate = 300; // Background ISR revalidate every 5 minutes as safety net
 
 export default async function HomePage() {
-  // Fetch featured products from PostgreSQL
-  const featuredDbProducts = await prisma.product.findMany({
-    where: {
-      isActive: true,
-      isFeatured: true,
-    },
-    take: 8,
-    orderBy: { createdAt: "desc" },
-    include: {
-      category: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-        },
-      },
-    },
-  });
-
-  // Serialize Prisma Decimal to number for client components
-  const featuredProducts: SerializedProduct[] = featuredDbProducts.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    price: Number(p.price),
-    stock: p.stock,
-    mainImage: p.mainImage,
-    isFeatured: p.isFeatured,
-    category: {
-      id: p.category.id,
-      name: p.category.name,
-      slug: p.category.slug,
-    },
-  }));
-
-  // Fetch active categories with product counts
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { name: "asc" },
-    include: {
-      _count: {
-        select: {
-          products: {
-            where: { isActive: true },
-          },
-        },
-      },
-    },
-  });
+  // Fetch cached featured products & categories concurrently
+  const [featuredProducts, categories] = await Promise.all([
+    getCachedFeaturedProducts(),
+    getCachedActiveCategoriesWithCount(),
+  ]);
 
   return (
     <div className="space-y-20 pb-20">

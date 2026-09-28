@@ -1,9 +1,7 @@
 import React from "react";
-import { prisma } from "@/lib/db/prisma";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopFilterBar } from "@/components/shop/ShopFilterBar";
-import { SerializedProduct } from "@/components/shop/ProductCard";
-import { Prisma } from "@prisma/client";
+import { getCachedShopProducts, getCachedCategoryList } from "@/lib/db/queries";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,6 +9,8 @@ export const metadata: Metadata = {
   description:
     "Explore our complete collection of handmade resin jewelry, pressed flower bookmarks, paper floral bouquets, and bespoke artisan gifts.",
 };
+
+export const revalidate = 300;
 
 interface ShopPageProps {
   searchParams: Promise<{
@@ -23,71 +23,11 @@ interface ShopPageProps {
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const { category, search, sort = "newest" } = await searchParams;
 
-  // Build Prisma where query
-  const where: Prisma.ProductWhereInput = {
-    isActive: true,
-  };
-
-  if (category) {
-    where.category = {
-      slug: category,
-    };
-  }
-
-  if (search && search.trim().length > 0) {
-    where.OR = [
-      { name: { contains: search.trim(), mode: "insensitive" } },
-      { description: { contains: search.trim(), mode: "insensitive" } },
-    ];
-  }
-
-  // Build Prisma orderBy query
-  let orderBy: Prisma.ProductOrderByWithRelationInput = { createdAt: "desc" };
-  if (sort === "price-asc") {
-    orderBy = { price: "asc" };
-  } else if (sort === "price-desc") {
-    orderBy = { price: "desc" };
-  } else if (sort === "name-asc") {
-    orderBy = { name: "asc" };
-  }
-
-  // Fetch products and active categories concurrently
-  const [dbProducts, categories] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy,
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-      },
-    }),
-    prisma.category.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, slug: true },
-      orderBy: { name: "asc" },
-    }),
+  // Concurrently fetch cached products and cached categories
+  const [products, categories] = await Promise.all([
+    getCachedShopProducts(category, search, sort),
+    getCachedCategoryList(),
   ]);
-
-  const products: SerializedProduct[] = dbProducts.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    price: Number(p.price),
-    stock: p.stock,
-    mainImage: p.mainImage,
-    isFeatured: p.isFeatured,
-    category: {
-      id: p.category.id,
-      name: p.category.name,
-      slug: p.category.slug,
-    },
-  }));
 
   // Selected category info for title
   const activeCategory = category ? categories.find((c) => c.slug === category) : null;

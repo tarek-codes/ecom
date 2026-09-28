@@ -3,7 +3,8 @@
 import { prisma } from "@/lib/db/prisma";
 import { requireAdmin } from "@/lib/auth/session";
 import { slugify } from "@/lib/utils/format";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { CACHE_TAGS } from "@/lib/db/queries";
 
 export interface ProductFormData {
   name: string;
@@ -55,6 +56,8 @@ export async function createProductAction(data: ProductFormData) {
       },
     });
 
+    // Invalidate product tags & path caches in Server Action
+    updateTag(CACHE_TAGS.products);
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/products");
@@ -107,6 +110,9 @@ export async function updateProductAction(id: string, data: ProductFormData) {
       }
     }
 
+    // Invalidate specific product cache and product catalog
+    updateTag(CACHE_TAGS.products);
+    updateTag(CACHE_TAGS.product(slug));
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath(`/products/${slug}`);
@@ -129,6 +135,8 @@ export async function toggleProductActiveAction(id: string, isActive: boolean) {
       data: { isActive },
     });
 
+    updateTag(CACHE_TAGS.products);
+    updateTag(CACHE_TAGS.product(updated.slug));
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath(`/products/${updated.slug}`);
@@ -152,10 +160,12 @@ export async function deleteProductAction(id: string) {
 
     if (orderItemsCount > 0) {
       // Soft-delete to preserve order history
-      await prisma.product.update({
+      const updated = await prisma.product.update({
         where: { id },
         data: { isActive: false },
       });
+      updateTag(CACHE_TAGS.products);
+      updateTag(CACHE_TAGS.product(updated.slug));
       revalidatePath("/");
       revalidatePath("/shop");
       revalidatePath("/admin/products");
@@ -166,10 +176,12 @@ export async function deleteProductAction(id: string) {
     }
 
     // Otherwise safe to hard delete
-    await prisma.product.delete({
+    const deleted = await prisma.product.delete({
       where: { id },
     });
 
+    updateTag(CACHE_TAGS.products);
+    updateTag(CACHE_TAGS.product(deleted.slug));
     revalidatePath("/");
     revalidatePath("/shop");
     revalidatePath("/admin/products");
