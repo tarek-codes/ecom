@@ -31,31 +31,37 @@ async function main() {
       name: "Resin Crafts",
       slug: "resin-crafts",
       description: "Hand-poured crystal clear resin art, preserved florals, and bespoke resin creations.",
+      image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80",
     },
     {
       name: "Paper Crafts",
       slug: "paper-crafts",
       description: "Artisanal paper flowers, quilled keepsakes, and intricately folded paper treasures.",
+      image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?auto=format&fit=crop&w=800&q=80",
     },
     {
       name: "Keychains",
       slug: "keychains",
       description: "Personalized letter keychains, botanical tags, and everyday pocket delights.",
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
     },
     {
       name: "Home Decor",
       slug: "home-decor",
       description: "Artistic frames, botanical coasters, and statement handcrafted tabletop pieces.",
+      image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=800&q=80",
     },
     {
       name: "Gifts",
       slug: "gifts",
       description: "Thoughtful handmade gift sets, curated boxes, and meaningful tokens of affection.",
+      image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80",
     },
     {
       name: "Custom Crafts",
       slug: "custom-crafts",
       description: "Made-to-order crafts personalized with initials, birthstones, and custom colorways.",
+      image: "https://images.unsplash.com/photo-1582142407894-ec85a1260a46?auto=format&fit=crop&w=800&q=80",
     },
   ];
 
@@ -66,12 +72,14 @@ async function main() {
       update: {
         name: cat.name,
         description: cat.description,
+        image: cat.image,
         isActive: true,
       },
       create: {
         name: cat.name,
         slug: cat.slug,
         description: cat.description,
+        image: cat.image,
         isActive: true,
       },
     });

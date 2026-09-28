@@ -9,6 +9,7 @@ export interface CategoryFormData {
   name: string;
   slug?: string;
   description?: string;
+  image?: string;
   isActive?: boolean;
 }
 
@@ -31,6 +32,7 @@ export async function createCategoryAction(data: CategoryFormData) {
         name: data.name.trim(),
         slug,
         description: data.description?.trim() || null,
+        image: data.image?.trim() || null,
         isActive: data.isActive !== undefined ? data.isActive : true,
       },
     });
@@ -63,6 +65,7 @@ export async function updateCategoryAction(id: string, data: CategoryFormData) {
         name: data.name.trim(),
         slug,
         description: data.description?.trim() || null,
+        image: data.image?.trim() || null,
         isActive: data.isActive !== undefined ? data.isActive : true,
       },
     });

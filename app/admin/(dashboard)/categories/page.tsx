@@ -20,6 +20,7 @@ export default async function AdminCategoriesPage() {
     name: c.name,
     slug: c.slug,
     description: c.description,
+    image: c.image,
     isActive: c.isActive,
     _count: {
       products: c._count.products,
