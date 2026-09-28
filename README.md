@@ -113,8 +113,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Admin Credentials
 
 - **Admin Login Route**: [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
-- **Email**: `admin@resincraft.com` (or the value set in `ADMIN_EMAIL`)
-- **Password**: `admin123456` (or the value set in `ADMIN_PASSWORD`)
+- **Email**: `random` (or the value set in `ADMIN_EMAIL`)
+- **Password**: `random` (or the value set in `ADMIN_PASSWORD`)
 
 ---
 
