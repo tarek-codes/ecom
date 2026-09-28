@@ -62,14 +62,14 @@ export function Hero() {
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-sm sm:max-w-md">
               {/* Main Visual Image */}
-              <div className="relative aspect-4/5 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-[#F3ECE2]">
+              <div className="relative aspect-4/3 sm:aspect-4/3 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-[#F3ECE2]">
                 <Image
-                  src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80"
-                  alt="Handcrafted Resin & Paper Art"
+                  src="/hero-craft.jpg"
+                  alt="Handcrafted Resin & Paper Craft Art"
                   fill
                   priority
                   className="object-cover"
-                  sizes="(max-width: 1024px) 90vw, 40vw"
+                  sizes="(max-width: 1024px) 90vw, 45vw"
                 />
               </div>
 

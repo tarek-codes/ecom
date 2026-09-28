@@ -7,7 +7,7 @@ export const STORE_CONFIG = {
   currencyCode: "BDT",
   defaultDeliveryFee: Number(process.env.DEFAULT_DELIVERY_FEE || 80),
   contact: {
-    phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "+880 1700-000000",
+    phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "01819921905",
     email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@resincraft.com",
     address:
       process.env.NEXT_PUBLIC_CONTACT_ADDRESS ||
