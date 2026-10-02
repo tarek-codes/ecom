@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { getAdminSession } from "@/lib/auth/session";
+import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/utils/cloudinary";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export async function POST(request: NextRequest) {
   try {
     // 1. Verify admin session
-    await requireAdmin();
+    const session = await getAdminSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: "Unauthorized. Please log in as admin." },
+        { status: 401 }
+      );
+    }
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -35,7 +42,31 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Save to public/uploads
+    // 2. Cloudinary Upload (Recommended for Vercel production)
+    if (isCloudinaryConfigured()) {
+      const ext = path.extname(file.name) || ".jpg";
+      const cleanBase = path
+        .basename(file.name, ext)
+        .replace(/[^a-zA-Z0-9_-]/g, "_")
+        .toLowerCase();
+      const filename = `${cleanBase}_${Date.now()}`;
+
+      const { url } = await uploadToCloudinary(buffer, "resin_craft_store", filename);
+      return NextResponse.json({ url, success: true, provider: "cloudinary" });
+    }
+
+    // 3. Fallback for Local Development (public/uploads)
+    // In Vercel serverless environments, warn if Cloudinary is not configured
+    if (process.env.VERCEL) {
+      return NextResponse.json(
+        {
+          error:
+            "Cloudinary is not configured on Vercel. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your Vercel Environment Variables.",
+        },
+        { status: 500 }
+      );
+    }
+
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     await mkdir(uploadDir, { recursive: true });
 
@@ -50,12 +81,12 @@ export async function POST(request: NextRequest) {
     await writeFile(filePath, buffer);
 
     const publicUrl = `/uploads/${filename}`;
-
-    return NextResponse.json({ url: publicUrl, success: true });
+    return NextResponse.json({ url: publicUrl, success: true, provider: "local" });
   } catch (error) {
     console.error("Upload error:", error);
+    const msg = error instanceof Error ? error.message : "Failed to upload image. Please try again.";
     return NextResponse.json(
-      { error: "Failed to upload image. Please try again." },
+      { error: msg },
       { status: 500 }
     );
   }
