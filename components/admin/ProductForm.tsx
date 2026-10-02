@@ -376,6 +376,10 @@ export function ProductForm({
                   />
                 </label>
 
+                {error && (
+                  <p className="text-xs text-rose-600 font-medium">{error}</p>
+                )}
+
                 {formData.mainImage && (
                   <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-[#EADBCE] bg-[#FAF7F2] shrink-0 shadow-xs">
                     <Image
